@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Mi Colección — Pokemon Tracker{% endblock %}
+
+{% block content %}
+<!-- Stats cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-label">Cartas únicas</div>
+      <div class="stat-value">{{ stats.total_cards or 0 }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-label">Total piezas</div>
+      <div class="stat-value">{{ stats.total_quantity or 0 }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="stat-card">
+      <div class="stat-label">Valor estimado (Trend)</div>
+      <div class="stat-value text-success">€{{ "%.2f"|format(stats.total_value or 0) }}</div>
+    </div>
+  </div>
+</div>
+
+{% if not api_configured %}
+<div class="alert alert-warning">
+  API de CardMarket no configurada — los precios no se actualizarán automáticamente.
+  Edita <code>pokemon_tracker/.env</code> con tus credenciales.
+</div>
+{% endif %}
+
+{% if last_update %}
+<p class="text-muted small mb-2">
+  Última actualización: <strong>{{ last_update.updated_at }}</strong> —
+  Actualización automática cada {{ update_hours }}h
+</p>
+{% endif %}
+
+<!-- Collection table -->
+<div class="table-responsive">
+  <table class="table table-dark table-hover table-sm align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Set</th>
+        <th>Nº</th>
+        <th class="text-center">Cant.</th>
+        <th class="text-center">Estado</th>
+        <th class="text-center">Idioma</th>
+        <th class="text-end">Mín. €</th>
+        <th class="text-end">Trend €</th>
+        <th class="text-end">Media €</th>
+        <th class="text-center">Actualizado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for card in cards %}
+      <tr>
+        <td>
+          {{ card.name }}
+          {% if card.foil %}<span class="badge bg-warning text-dark ms-1">Foil</span>{% endif %}
+        </td>
+        <td>{{ card.set_name or '—' }}</td>
+        <td class="text-center">{{ card.card_number or '—' }}</td>
+        <td class="text-center">{{ card.quantity }}</td>
+        <td class="text-center"><span class="badge bg-secondary">{{ card.condition }}</span></td>
+        <td class="text-center">{{ card.language }}</td>
+        <td class="text-end">{{ "€%.2f"|format(card.price_low) if card.price_low else '—' }}</td>
+        <td class="text-end fw-bold text-info">{{ "€%.2f"|format(card.price_trend) if card.price_trend else '—' }}</td>
+        <td class="text-end">{{ "€%.2f"|format(card.price_avg) if card.price_avg else '—' }}</td>
+        <td class="text-center text-muted small">{{ card.last_updated or '—' }}</td>
+        <td class="text-end">
+          <a href="/edit/{{ card.id }}" class="btn btn-outline-secondary btn-sm py-0">Editar</a>
+          <form action="/delete/{{ card.id }}" method="post" class="d-inline"
+                onsubmit="return confirm('¿Eliminar {{ card.name }}?')">
+            <button class="btn btn-outline-danger btn-sm py-0">Borrar</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="11" class="text-center text-muted py-5">
+          No hay cartas en tu colección.
+          <a href="/add" class="text-warning">Añade tu primera carta</a>.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

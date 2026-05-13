@@ -1,0 +1,73 @@
+:root {
+  --bg: #121212;
+  --surface: #1e1e2e;
+  --surface2: #2a2a3e;
+  --accent: #a855f7;
+  --text: #e0e0e0;
+  --muted: #7070a0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* navbar */
+.navbar {
+  background-color: #0d0d1a !important;
+  border-bottom: 1px solid #2a2a3e;
+}
+.navbar-brand { color: var(--accent) !important; font-size: 1.1rem; }
+
+/* cards */
+.card {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--surface2);
+}
+.card-header {
+  background-color: var(--surface2) !important;
+  border-bottom: 1px solid #33334a;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* stat card */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+.stat-label { font-size: .8rem; color: var(--muted); margin-bottom: .25rem; }
+.stat-value  { font-size: 1.6rem; font-weight: 700; }
+
+/* table */
+.table-dark {
+  --bs-table-bg: var(--surface);
+  --bs-table-hover-bg: var(--surface2);
+  --bs-table-border-color: #2a2a3e;
+}
+thead th {
+  color: var(--accent);
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 2px solid var(--surface2) !important;
+}
+
+/* forms */
+.form-control, .form-select {
+  background-color: var(--surface2);
+  border-color: #3a3a5a;
+  color: var(--text);
+}
+.form-control:focus, .form-select:focus {
+  background-color: var(--surface2);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 0 .2rem rgba(168,85,247,.25);
+}
+.form-control::placeholder { color: var(--muted); }
+
+/* card image in search results */
+.card-img-top { background: #111; border-radius: 4px 4px 0 0; }

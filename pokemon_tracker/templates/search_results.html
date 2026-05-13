@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Resultados: {{ query }} — Pokemon Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3 gap-3">
+  <h5 class="mb-0">Resultados para "{{ query }}"</h5>
+  <a href="/add" class="btn btn-outline-secondary btn-sm">Volver</a>
+</div>
+
+{% if not products %}
+<div class="alert alert-warning">No se encontraron cartas en CardMarket con ese nombre.</div>
+{% else %}
+<div class="row g-3">
+  {% for p in products %}
+  <div class="col-sm-6 col-md-4 col-lg-3">
+    <div class="card bg-dark text-white h-100">
+      {% if p.image %}
+      <img src="{{ p.image }}" class="card-img-top p-2"
+           alt="{{ p.enName or p.locName }}"
+           style="max-height:180px;object-fit:contain;">
+      {% endif %}
+      <div class="card-body pb-1">
+        <h6 class="card-title mb-1">{{ p.enName or p.locName or 'Sin nombre' }}</h6>
+        <p class="text-muted small mb-1">{{ p.expansionName or '' }}</p>
+        {% if p.priceGuide %}
+          <p class="text-info mb-0 small">
+            Trend: <strong>€{{ "%.2f"|format(p.priceGuide.TREND or 0) }}</strong>
+            &nbsp;|&nbsp; Mín: €{{ "%.2f"|format(p.priceGuide.LOW or 0) }}
+          </p>
+        {% endif %}
+      </div>
+      <div class="card-footer pt-2">
+        <form action="/add_from_search" method="post">
+          <input type="hidden" name="cardmarket_id" value="{{ p.idProduct }}">
+          <input type="hidden" name="name"      value="{{ p.enName or p.locName or '' }}">
+          <input type="hidden" name="set_name"  value="{{ p.expansionName or '' }}">
+          <input type="hidden" name="image_url" value="{{ p.image or '' }}">
+          <div class="row g-1 mb-2">
+            <div class="col">
+              <input type="number" name="quantity" class="form-control form-control-sm"
+                     value="1" min="1" placeholder="Cant.">
+            </div>
+            <div class="col">
+              <select name="condition" class="form-select form-select-sm">
+                <option value="NM">NM</option>
+                <option value="EX">EX</option>
+                <option value="GD">GD</option>
+                <option value="LP">LP</option>
+              </select>
+            </div>
+            <div class="col">
+              <select name="language" class="form-select form-select-sm">
+                <option value="ES">ES</option>
+                <option value="EN">EN</option>
+                <option value="DE">DE</option>
+                <option value="FR">FR</option>
+                <option value="IT">IT</option>
+                <option value="JA">JA</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success btn-sm w-100">+ Añadir</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
