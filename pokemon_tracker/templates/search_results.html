@@ -7,34 +7,41 @@
   <a href="/add" class="btn btn-outline-secondary btn-sm">Volver</a>
 </div>
 
-{% if not products %}
-<div class="alert alert-warning">No se encontraron cartas en CardMarket con ese nombre.</div>
+{% if not cards %}
+<div class="alert alert-warning">No se encontraron cartas con ese nombre.</div>
 {% else %}
 <div class="row g-3">
-  {% for p in products %}
+  {% for c in cards %}
   <div class="col-sm-6 col-md-4 col-lg-3">
     <div class="card bg-dark text-white h-100">
-      {% if p.image %}
-      <img src="{{ p.image }}" class="card-img-top p-2"
-           alt="{{ p.enName or p.locName }}"
-           style="max-height:180px;object-fit:contain;">
+      {% if c.images and c.images.small %}
+      <img src="{{ c.images.small }}" class="card-img-top p-2"
+           alt="{{ c.name }}" style="max-height:180px;object-fit:contain;">
       {% endif %}
       <div class="card-body pb-1">
-        <h6 class="card-title mb-1">{{ p.enName or p.locName or 'Sin nombre' }}</h6>
-        <p class="text-muted small mb-1">{{ p.expansionName or '' }}</p>
-        {% if p.priceGuide %}
-          <p class="text-info mb-0 small">
-            Trend: <strong>€{{ "%.2f"|format(p.priceGuide.TREND or 0) }}</strong>
-            &nbsp;|&nbsp; Mín: €{{ "%.2f"|format(p.priceGuide.LOW or 0) }}
-          </p>
+        <h6 class="card-title mb-1">{{ c.name }}</h6>
+        <p class="text-muted small mb-1">
+          {{ c.set.name if c.set else '' }}
+          {% if c.number %} · {{ c.number }}{% endif %}
+        </p>
+        {% if c.cardmarket and c.cardmarket.prices %}
+        <p class="text-info mb-0 small">
+          Trend: <strong>€{{ "%.2f"|format(c.cardmarket.prices.trendPrice or 0) }}</strong>
+          &nbsp;|&nbsp;
+          Mín: €{{ "%.2f"|format(c.cardmarket.prices.lowPrice or 0) }}
+        </p>
+        {% else %}
+        <p class="text-muted small mb-0">Sin precio disponible</p>
         {% endif %}
       </div>
       <div class="card-footer pt-2">
         <form action="/add_from_search" method="post">
-          <input type="hidden" name="cardmarket_id" value="{{ p.idProduct }}">
-          <input type="hidden" name="name"      value="{{ p.enName or p.locName or '' }}">
-          <input type="hidden" name="set_name"  value="{{ p.expansionName or '' }}">
-          <input type="hidden" name="image_url" value="{{ p.image or '' }}">
+          <input type="hidden" name="pokemontcg_id" value="{{ c.id }}">
+          <input type="hidden" name="name"           value="{{ c.name }}">
+          <input type="hidden" name="set_name"       value="{{ c.set.name if c.set else '' }}">
+          <input type="hidden" name="card_number"    value="{{ c.number or '' }}">
+          <input type="hidden" name="image_url"      value="{{ c.images.small if c.images else '' }}">
+          <input type="hidden" name="image_url_large" value="{{ c.images.large if c.images else '' }}">
           <div class="row g-1 mb-2">
             <div class="col">
               <input type="number" name="quantity" class="form-control form-control-sm"
