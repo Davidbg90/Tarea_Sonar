@@ -6,6 +6,7 @@ import config
 def get_conn():
     conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
@@ -24,10 +25,24 @@ def init_db():
                 price_low REAL,
                 price_trend REAL,
                 price_avg REAL,
+                price_avg1 REAL,
+                price_avg7 REAL,
+                price_avg30 REAL,
                 last_updated TEXT,
-                cardmarket_id INTEGER,
-                image_url TEXT,
+                pokemontcg_id TEXT,
+                image_url TEXT DEFAULT '',
+                image_url_large TEXT DEFAULT '',
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS price_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                card_id INTEGER NOT NULL,
+                recorded_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                price_low REAL,
+                price_trend REAL,
+                price_avg REAL,
+                FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
             );
 
             CREATE TABLE IF NOT EXISTS update_log (
@@ -38,13 +53,29 @@ def init_db():
                 message TEXT DEFAULT ''
             );
         """)
+    _migrate()
+
+
+def _migrate():
+    """Add columns that may not exist in older DBs."""
+    new_cols = {
+        "price_avg1": "REAL",
+        "price_avg7": "REAL",
+        "price_avg30": "REAL",
+        "image_url_large": "TEXT DEFAULT ''",
+        "pokemontcg_id": "TEXT",
+    }
+    with get_conn() as conn:
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(cards)")}
+        for col, typ in new_cols.items():
+            if col not in existing:
+                conn.execute(f"ALTER TABLE cards ADD COLUMN {col} {typ}")
+        conn.commit()
 
 
 def get_all_cards():
     with get_conn() as conn:
-        return [dict(r) for r in conn.execute(
-            "SELECT * FROM cards ORDER BY name"
-        ).fetchall()]
+        return [dict(r) for r in conn.execute("SELECT * FROM cards ORDER BY name").fetchall()]
 
 
 def get_card(card_id):
@@ -55,14 +86,14 @@ def get_card(card_id):
 
 def add_card(name, set_name='', card_number='', quantity=1,
              condition='NM', language='ES', foil=False,
-             cardmarket_id=None, image_url=''):
+             pokemontcg_id=None, image_url='', image_url_large=''):
     with get_conn() as conn:
         conn.execute("""
             INSERT INTO cards (name, set_name, card_number, quantity, condition,
-                               language, foil, cardmarket_id, image_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               language, foil, pokemontcg_id, image_url, image_url_large)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (name, set_name, card_number, quantity, condition,
-              language, int(bool(foil)), cardmarket_id, image_url))
+              language, int(bool(foil)), pokemontcg_id, image_url, image_url_large))
         conn.commit()
 
 
@@ -83,17 +114,35 @@ def delete_card(card_id):
 
 
 def update_prices(prices_by_id):
-    """prices_by_id: {card_id: {'price_low': x, 'price_trend': y, 'price_avg': z}}"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     with get_conn() as conn:
-        for card_id, prices in prices_by_id.items():
+        for card_id, p in prices_by_id.items():
             conn.execute("""
-                UPDATE cards
-                SET price_low=?, price_trend=?, price_avg=?, last_updated=?
+                UPDATE cards SET
+                    price_low=?, price_trend=?, price_avg=?,
+                    price_avg1=?, price_avg7=?, price_avg30=?,
+                    image_url=?, image_url_large=?, last_updated=?
                 WHERE id=?
-            """, (prices.get("price_low"), prices.get("price_trend"),
-                  prices.get("price_avg"), now, card_id))
+            """, (p.get("price_low"), p.get("price_trend"), p.get("price_avg"),
+                  p.get("price_avg1"), p.get("price_avg7"), p.get("price_avg30"),
+                  p.get("image_url", ""), p.get("image_url_large", ""), now, card_id))
+            # Record in price history (only if we got at least a trend price)
+            if p.get("price_trend") or p.get("price_avg"):
+                conn.execute("""
+                    INSERT INTO price_history (card_id, recorded_at, price_low, price_trend, price_avg)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (card_id, now, p.get("price_low"), p.get("price_trend"), p.get("price_avg")))
         conn.commit()
+
+
+def get_price_history(card_id, limit=30):
+    with get_conn() as conn:
+        return [dict(r) for r in conn.execute("""
+            SELECT recorded_at, price_low, price_trend, price_avg
+            FROM price_history
+            WHERE card_id=?
+            ORDER BY id DESC LIMIT ?
+        """, (card_id, limit)).fetchall()]
 
 
 def get_collection_stats():

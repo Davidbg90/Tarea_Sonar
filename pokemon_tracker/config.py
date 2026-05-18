@@ -9,12 +9,9 @@ except ImportError:
 
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / "collection.db"
+IMG_CACHE_DIR = BASE_DIR / "img_cache"
 
-CARDMARKET_APP_TOKEN = os.getenv("CARDMARKET_APP_TOKEN", "")
-CARDMARKET_APP_SECRET = os.getenv("CARDMARKET_APP_SECRET", "")
-CARDMARKET_ACCESS_TOKEN = os.getenv("CARDMARKET_ACCESS_TOKEN", "")
-CARDMARKET_ACCESS_SECRET = os.getenv("CARDMARKET_ACCESS_SECRET", "")
-CARDMARKET_SANDBOX = os.getenv("CARDMARKET_SANDBOX", "false").lower() == "true"
+POKEMONTCG_API_KEY = os.getenv("POKEMONTCG_API_KEY", "")
 
 FLASK_HOST = os.getenv("FLASK_HOST", "0.0.0.0")
 FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
