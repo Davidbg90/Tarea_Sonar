@@ -19,13 +19,13 @@ class PokemonTCGAPI:
             f"{self.BASE_URL}/cards",
             params={"q": f'name:"{name}"', "orderBy": "-set.releaseDate", "pageSize": 20},
             headers=self.headers,
-            timeout=15,
+            timeout=20,
         )
         r.raise_for_status()
         return r.json().get("data", [])
 
     def get_card(self, card_id):
-        r = requests.get(f"{self.BASE_URL}/cards/{card_id}", headers=self.headers, timeout=15)
+        r = requests.get(f"{self.BASE_URL}/cards/{card_id}", headers=self.headers, timeout=20)
         r.raise_for_status()
         return r.json().get("data", {})
 

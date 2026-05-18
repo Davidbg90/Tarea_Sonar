@@ -1,9 +1,13 @@
 import logging
+import time
 from apscheduler.schedulers.background import BackgroundScheduler
 import database
 import config
 
 logger = logging.getLogger(__name__)
+
+_CALL_DELAY = 0.3   # seconds between API calls
+_RETRY_DELAY = 5    # seconds before retrying a failed card
 
 
 def update_all_prices(api):
@@ -14,11 +18,26 @@ def update_all_prices(api):
         return 0
 
     prices = {}
+    failed = []
+
     for card in cards:
         try:
             prices[card["id"]] = api.get_prices(card["pokemontcg_id"])
         except Exception as exc:
-            logger.error("Price fetch failed for %s: %s", card["name"], exc)
+            logger.warning("Price fetch failed for %s (will retry): %s", card["name"], exc)
+            failed.append(card)
+        time.sleep(_CALL_DELAY)
+
+    if failed:
+        logger.info("Retrying %d failed cards after %ds...", len(failed), _RETRY_DELAY)
+        time.sleep(_RETRY_DELAY)
+        for card in failed:
+            try:
+                prices[card["id"]] = api.get_prices(card["pokemontcg_id"])
+                logger.info("Retry succeeded for %s", card["name"])
+            except Exception as exc:
+                logger.error("Price fetch failed permanently for %s: %s", card["name"], exc)
+            time.sleep(_CALL_DELAY)
 
     if prices:
         database.update_prices(prices)
