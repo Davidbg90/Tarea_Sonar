@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Editar {{ card.name }} — Pokemon Tracker{% endblock %}
+
+{% block content %}
+<h5 class="mb-4">Editar: {{ card.name }}</h5>
+
+<div class="card bg-dark text-white" style="max-width:600px">
+  <div class="card-body">
+    <form action="/edit/{{ card.id }}" method="post">
+      <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="name" class="form-control"
+               value="{{ card.name }}" required>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col">
+          <label class="form-label">Set / Expansión</label>
+          <input type="text" name="set_name" class="form-control"
+                 value="{{ card.set_name or '' }}">
+        </div>
+        <div class="col">
+          <label class="form-label">Número</label>
+          <input type="text" name="card_number" class="form-control"
+                 value="{{ card.card_number or '' }}">
+        </div>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col">
+          <label class="form-label">Cantidad</label>
+          <input type="number" name="quantity" class="form-control"
+                 value="{{ card.quantity }}" min="1">
+        </div>
+        <div class="col">
+          <label class="form-label">Estado</label>
+          <select name="condition" class="form-select">
+            {% for c in ['NM','EX','GD','LP','PL','PO'] %}
+            <option value="{{ c }}" {% if card.condition == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col">
+          <label class="form-label">Idioma</label>
+          <select name="language" class="form-select">
+            {% for code, label in [('ES','Español'),('EN','English'),('DE','Deutsch'),('FR','Français'),('IT','Italiano'),('PT','Português'),('JA','Japanese')] %}
+            <option value="{{ code }}" {% if card.language == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="foil" id="foil"
+               {% if card.foil %}checked{% endif %}>
+        <label class="form-check-label" for="foil">Foil / Holo</label>
+      </div>
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="/" class="btn btn-outline-secondary ms-2">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Añadir Carta — Pokemon Tracker{% endblock %}
+
+{% block content %}
+<h5 class="mb-4">Añadir carta a la colección</h5>
+
+<div class="row g-4">
+  <!-- Search CardMarket -->
+  <div class="col-md-6">
+    <div class="card bg-dark text-white h-100">
+      <div class="card-header">Buscar en CardMarket</div>
+      <div class="card-body">
+        <p class="text-muted small">Busca la carta por nombre y añádela directamente con sus datos de precio.</p>
+        <form action="/search" method="post">
+          <div class="mb-3">
+            <label class="form-label">Nombre de la carta</label>
+            <input type="text" name="name" class="form-control"
+                   placeholder="Ej: Charizard, Pikachu, Mewtwo..." required autofocus>
+          </div>
+          <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual entry -->
+  <div class="col-md-6">
+    <div class="card bg-dark text-white h-100">
+      <div class="card-header">Añadir manualmente</div>
+      <div class="card-body">
+        <p class="text-muted small">Si no tienes la API configurada, puedes añadir la carta a mano.</p>
+        <form action="/add_manual" method="post">
+          <div class="mb-2">
+            <input type="text" name="name" class="form-control" placeholder="Nombre *" required>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <input type="text" name="set_name" class="form-control" placeholder="Set / Expansión">
+            </div>
+            <div class="col">
+              <input type="text" name="card_number" class="form-control" placeholder="Número (ej: 4/102)">
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col">
+              <input type="number" name="quantity" class="form-control" value="1" min="1" placeholder="Cant.">
+            </div>
+            <div class="col">
+              <select name="condition" class="form-select">
+                <option value="NM">Near Mint (NM)</option>
+                <option value="EX">Excellent (EX)</option>
+                <option value="GD">Good (GD)</option>
+                <option value="LP">Light Played (LP)</option>
+                <option value="PL">Played (PL)</option>
+                <option value="PO">Poor (PO)</option>
+              </select>
+            </div>
+            <div class="col">
+              <select name="language" class="form-select">
+                <option value="ES">Español</option>
+                <option value="EN">English</option>
+                <option value="DE">Deutsch</option>
+                <option value="FR">Français</option>
+                <option value="IT">Italiano</option>
+                <option value="PT">Português</option>
+                <option value="JA">Japanese</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="foil" id="foil">
+            <label class="form-check-label" for="foil">Foil / Holo</label>
+          </div>
+          <button type="submit" class="btn btn-success">Añadir carta</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

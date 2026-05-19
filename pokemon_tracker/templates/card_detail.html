@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ card.name }} — Pokemon Tracker{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="/" class="btn btn-outline-secondary btn-sm">← Colección</a>
+</div>
+
+<div class="row g-4">
+  <!-- Card image -->
+  <div class="col-md-3 text-center">
+    {% if card.image_url_large %}
+    <img src="{{ card.image_url_large }}" alt="{{ card.name }}"
+         class="img-fluid" style="border-radius:12px;max-width:260px;">
+    {% elif card.image_url %}
+    <img src="{{ card.image_url }}" alt="{{ card.name }}"
+         class="img-fluid" style="border-radius:12px;max-width:260px;">
+    {% else %}
+    <div class="bg-dark rounded d-flex align-items-center justify-content-center"
+         style="width:200px;height:280px;margin:auto;">
+      <span class="text-muted">Sin imagen</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Info + prices -->
+  <div class="col-md-4">
+    <h3 class="text-accent fw-bold mb-1" style="color:#a855f7">{{ card.name }}</h3>
+    <p class="text-muted">
+      {{ card.set_name or '—' }}
+      {% if card.card_number %} · {{ card.card_number }}{% endif %}
+    </p>
+    <div class="d-flex gap-2 mb-3">
+      <span class="badge bg-secondary">{{ card.condition }}</span>
+      <span class="badge bg-dark border">{{ card.language }}</span>
+      {% if card.foil %}<span class="badge bg-warning text-dark">Foil</span>{% endif %}
+      <span class="badge bg-dark border">x{{ card.quantity }}</span>
+    </div>
+
+    <table class="table table-dark table-sm" style="max-width:280px">
+      <tbody>
+        <tr>
+          <td class="text-muted">Mínimo</td>
+          <td class="fw-bold">{{ "€%.2f"|format(card.price_low) if card.price_low else '—' }}</td>
+        </tr>
+        <tr>
+          <td class="text-muted">Trend</td>
+          <td class="fw-bold text-info">{{ "€%.2f"|format(card.price_trend) if card.price_trend else '—' }}</td>
+        </tr>
+        <tr>
+          <td class="text-muted">Media venta</td>
+          <td class="fw-bold">{{ "€%.2f"|format(card.price_avg) if card.price_avg else '—' }}</td>
+        </tr>
+        <tr><td colspan="2"><hr class="my-1"></td></tr>
+        <tr>
+          <td class="text-muted">Promedio ayer</td>
+          <td>{{ "€%.2f"|format(card.price_avg1) if card.price_avg1 else '—' }}</td>
+        </tr>
+        <tr>
+          <td class="text-muted">Promedio 7d</td>
+          <td>{{ "€%.2f"|format(card.price_avg7) if card.price_avg7 else '—' }}</td>
+        </tr>
+        <tr>
+          <td class="text-muted">Promedio 30d</td>
+          <td>{{ "€%.2f"|format(card.price_avg30) if card.price_avg30 else '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-2">
+      <a href="/edit/{{ card.id }}" class="btn btn-outline-secondary btn-sm">Editar carta</a>
+    </div>
+  </div>
+
+  <!-- Price history chart -->
+  <div class="col-md-5">
+    <h6 class="text-muted mb-3">Historial de precios</h6>
+    {% if history and history|length >= 2 %}
+    <canvas id="priceChart" height="200"></canvas>
+    {% elif card.price_avg1 or card.price_avg7 or card.price_avg30 %}
+    <p class="text-muted small mb-2">Promedios de mercado actuales:</p>
+    <canvas id="priceChart" height="200"></canvas>
+    {% else %}
+    <div class="text-muted text-center py-5">
+      <p>Sin historial aún.</p>
+      <p class="small">Se irá acumulando con cada actualización automática.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const ctx = document.getElementById("priceChart");
+  if (!ctx) return;
+
+  {% if history and history|length >= 2 %}
+  const labels = {{ history | map(attribute='recorded_at') | map('truncate', 10, False, '') | list | tojson }};
+  const data   = {{ history | map(attribute='price_trend') | list | tojson }};
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Trend €",
+        data,
+        borderColor: "#a855f7",
+        backgroundColor: "rgba(168,85,247,0.15)",
+        tension: 0.3,
+        fill: true,
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: "#e0e0e0" } } },
+      scales: {
+        x: { ticks: { color: "#7070a0", maxRotation: 45 }, grid: { color: "#2a2a3e" } },
+        y: { ticks: { color: "#7070a0", callback: v => "€" + v.toFixed(2) }, grid: { color: "#2a2a3e" } }
+      }
+    }
+  });
+  {% elif card.price_avg1 or card.price_avg7 or card.price_avg30 %}
+  const labels = ["30 días","7 días","Ayer","Hoy"];
+  const data   = [
+    {{ card.price_avg30 or 'null' }},
+    {{ card.price_avg7  or 'null' }},
+    {{ card.price_avg1  or 'null' }},
+    {{ card.price_trend or 'null' }},
+  ];
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Precio medio €",
+        data,
+        backgroundColor: "rgba(168,85,247,0.7)",
+        borderColor: "#a855f7",
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: "#e0e0e0" } } },
+      scales: {
+        x: { ticks: { color: "#7070a0" }, grid: { color: "#2a2a3e" } },
+        y: { ticks: { color: "#7070a0", callback: v => "€" + v.toFixed(2) }, grid: { color: "#2a2a3e" } }
+      }
+    }
+  });
+  {% endif %}
+})();
+</script>
+{% endblock %}
