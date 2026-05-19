@@ -22,7 +22,11 @@ def update_all_prices(api):
 
     for card in cards:
         try:
-            prices[card["id"]] = api.get_prices(card["pokemontcg_id"])
+            p = api.get_prices(card["pokemontcg_id"])
+            prices[card["id"]] = p
+            trend = p.get("price_trend")
+            logger.info("  %-35s trend=%s", card["name"],
+                        f"€{trend:.2f}" if trend is not None else "null (no CardMarket data)")
         except Exception as exc:
             logger.warning("Price fetch failed for %s (will retry): %s", card["name"], exc)
             failed.append(card)

@@ -122,4 +122,24 @@ def create_app(api):
     def api_cards():
         return jsonify(database.get_all_cards())
 
+    @app.route("/api/debug/card/<int:card_id>")
+    def debug_card(card_id):
+        card = database.get_card(card_id)
+        if not card:
+            return jsonify({"error": "card not found"}), 404
+        if not card.get("pokemontcg_id"):
+            return jsonify({"error": "no pokemontcg_id", "card": dict(card)})
+        try:
+            raw = api.get_card(card["pokemontcg_id"])
+        except Exception as exc:
+            return jsonify({"error": str(exc)})
+        return jsonify({
+            "pokemontcg_id": card["pokemontcg_id"],
+            "api_set": raw.get("set", {}).get("name"),
+            "api_cardmarket": raw.get("cardmarket"),
+            "db_prices": {k: card[k] for k in
+                          ("price_low", "price_trend", "price_avg",
+                           "price_avg1", "price_avg7", "price_avg30", "last_updated")},
+        })
+
     return app
