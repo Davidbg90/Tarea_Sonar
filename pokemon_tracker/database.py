@@ -117,15 +117,19 @@ def update_prices(prices_by_id):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     with get_conn() as conn:
         for card_id, p in prices_by_id.items():
+            img      = p.get("image_url") or ""
+            img_lg   = p.get("image_url_large") or ""
             conn.execute("""
                 UPDATE cards SET
                     price_low=?, price_trend=?, price_avg=?,
                     price_avg1=?, price_avg7=?, price_avg30=?,
-                    image_url=?, image_url_large=?, last_updated=?
+                    image_url      = CASE WHEN ? != '' THEN ? ELSE image_url END,
+                    image_url_large= CASE WHEN ? != '' THEN ? ELSE image_url_large END,
+                    last_updated=?
                 WHERE id=?
             """, (p.get("price_low"), p.get("price_trend"), p.get("price_avg"),
                   p.get("price_avg1"), p.get("price_avg7"), p.get("price_avg30"),
-                  p.get("image_url", ""), p.get("image_url_large", ""), now, card_id))
+                  img, img, img_lg, img_lg, now, card_id))
             # Record in price history (only if we got at least a trend price)
             if p.get("price_trend") or p.get("price_avg"):
                 conn.execute("""

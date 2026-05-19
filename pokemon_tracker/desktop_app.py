@@ -164,11 +164,13 @@ class DetailPanel(tk.Frame):
 
     def _load_img(self, url):
         photo = _fetch_image(url, (200, 280))
-        if photo:
-            self._photo = photo
-            self.img_lbl.config(image=photo, text="")
-        else:
-            self.img_lbl.config(text="Sin imagen", image="")
+        def _apply():
+            if photo:
+                self._photo = photo
+                self.img_lbl.config(image=photo, text="")
+            else:
+                self.img_lbl.config(text="Sin imagen", image="")
+        self.img_lbl.after(0, _apply)
 
     def _render_chart(self, history, card):
         for w in self.chart_f.winfo_children():
